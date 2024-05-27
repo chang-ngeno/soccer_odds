@@ -2,6 +2,7 @@ from datetime import date
 import pandas as pd
 import numpy as np
 
+
 class PrepareDf:
 
     def __init__(self, matches, playerRefs, playerAttributes):
@@ -21,7 +22,7 @@ class PrepareDf:
 
     def get_final_df(self, nGames=5):
 
-        #result = pd.DataFrame(columns=self.attributes.extend(self.matchStats))
+        # result = pd.DataFrame(columns=self.attributes.extend(self.matchStats))
 
         self.attributes = self.matches.apply(lambda row: self._get_match_attributes(row), axis=1)
         self.teamsForms = self.matches.apply(lambda row: self._get_teams_forms(row, nGames), axis=1)
@@ -31,11 +32,9 @@ class PrepareDf:
         self.formColumns = self.teamsForms.columns
 
         finalDf = pd.concat([self.attributes, self.teamsForms, self.matchesWinners], axis=1)
-        finalDf.rename(columns={'0':'winner'}, inplace=True)
+        finalDf.rename(columns={'0': 'winner'}, inplace=True)
 
         return finalDf
-
-    
 
     def _get_teams_forms(self, row, nGames):
         homeTeam = row['homeTeam']
@@ -47,23 +46,23 @@ class PrepareDf:
         awayStatsColumns.remove('awayTeam')
         homeValues = pd.DataFrame(columns=homeStatsColumns)
         homeValues.loc[0] = [np.nan for column in homeValues.columns]
-        
+
         awayValues = pd.DataFrame(columns=awayStatsColumns)
         awayValues.loc[0] = [np.nan for column in awayValues.columns]
-        
-        shortDf = self.matches.iloc[0:index,]
+
+        shortDf = self.matches.iloc[0:index, ]
         homeMatchesDf = shortDf[(shortDf['homeTeam'] == homeTeam) | (shortDf['awayTeam'] == homeTeam)]
-        homeMatchesDf = homeMatchesDf.iloc[-nGames:,]
+        homeMatchesDf = homeMatchesDf.iloc[-nGames:, ]
         awayMatchesDf = shortDf[(shortDf['homeTeam'] == awayTeam) | (shortDf['awayTeam'] == awayTeam)]
-        awayMatchesDf = awayMatchesDf.iloc[-nGames:,]
+        awayMatchesDf = awayMatchesDf.iloc[-nGames:, ]
         if len(homeMatchesDf) == 0:
             return pd.concat([homeValues, awayValues], axis=1).iloc[0]
         if len(awayMatchesDf) == 0:
             return pd.concat([homeValues, awayValues], axis=1).iloc[0]
-        
+
         homeValues = pd.DataFrame(columns=homeStatsColumns)
         awayValues = pd.DataFrame(columns=awayStatsColumns)
-        
+
         for i in range(nGames):
             if i < len(homeMatchesDf):
                 if homeMatchesDf.iloc[i]["homeTeam"] == homeTeam:
@@ -75,18 +74,15 @@ class PrepareDf:
                     awayValues.loc[i] = awayMatchesDf.iloc[i][homeStatsColumns].values
                 else:
                     awayValues.loc[i] = awayMatchesDf.iloc[i][awayStatsColumns].values
-        
+
         homeValues = homeValues.mean(axis=0)
         awayValues = awayValues.mean(axis=0)
         """print(homeValues)
         print('CONCAT')
         print(pd.concat([homeValues, awayValues], axis=0).iloc[0])"""
         form = pd.concat([homeValues, awayValues], axis=0)
-        
 
         return form
-
-        
 
     def _get_match_attributes(self, row):
 
@@ -104,26 +100,24 @@ class PrepareDf:
         fifaGame = row['fifaGame']
         playersMerge = self.playersMerge[self.playersMerge['fifaGame'] == fifaGame].set_index('player', drop=True)
 
-        homeGK = playersMerge.loc[homeGK,:]
+        homeGK = playersMerge.loc[homeGK, :]
         homeGK = homeGK.filter(regex='^GK ')
 
-
-        homeLine = playersMerge.loc[homePlayers,self.attributes]
+        homeLine = playersMerge.loc[homePlayers, self.attributes]
         homeLine = homeLine.filter(regex='^(?![GK ])')
         homeLine = homeLine.mean(axis=0)
 
-
-        awayGK = playersMerge.loc[awayGK,:]
+        awayGK = playersMerge.loc[awayGK, :]
         awayGK = awayGK.filter(regex='^GK ')
 
-        awayLine = playersMerge.loc[awayPlayers,self.attributes]
+        awayLine = playersMerge.loc[awayPlayers, self.attributes]
         awayLine = awayLine.filter(regex='^(?![GK ])')
         awayLine = awayLine.mean(axis=0)
 
         lineDiff = homeLine - awayLine
 
         GKDiff = homeGK - awayGK
-        
+
         values = lineDiff.to_list() + GKDiff.to_list()
         matchAttributes = pd.Series(data=values, index=columns)
 
@@ -139,14 +133,19 @@ class PrepareDf:
             winner = 'away'
         return pd.Series(data=winner, index=["winner"])
 
-    def _get_fifa_game(self,matchday):
-        
-        releaseDates = {'FIFA16':date(2015,9,22), 'FIFA17':date(2016,9,27), 'FIFA18':date(2017,9,29), 'FIFA19':date(2018,9,28),
-                        'FIFA20':date(2019,9,27), 'FIFA21':date(2020,10,9), 'FIFA22':date(2021,10,1), 'FIFA23':date(2022,9,30)}
+    def _get_fifa_game(self, matchday):
+
+        global game
+        releaseDates = {'FIFA16': date(2015, 9, 22),
+                        'FIFA17': date(2016, 9, 27),
+                        'FIFA18': date(2017, 9, 29),
+                        'FIFA19': date(2018, 9, 28),
+                        'FIFA20': date(2019, 9, 27),
+                        'FIFA21': date(2020, 10, 9),
+                        'FIFA22': date(2021, 10, 1),
+                        'FIFA23': date(2022, 9, 30)}
 
         for game in range(23, 16, -1):
             if matchday >= releaseDates[f"FIFA{game}"]:
                 break
         return game
-
-

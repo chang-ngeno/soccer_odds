@@ -1,12 +1,13 @@
-beautifulsoup4
-selenium
+beautifulsoup4~=4.12.3
+selenium~=4.20.0
 requests
 
-pandas
-numpy
-datetime
-rapidfuzz
+pandas~=2.2.2
+numpy~=1.26.4
+datetime~=5.5
+rapidfuzz~=3.9.0
 
-sklearn
+scikit-learn
 xgboost
 catboost
+matplotlib
